@@ -19,8 +19,6 @@ namespace BaldiKitchen
         public virtual Sprite roomSprite => null;
         protected KitchenFieldTripManager manager;
 
-        public abstract void PrepareMiniIntro(ref SoundObject[] objs);
-
         public virtual void Initialize(KitchenFieldTripManager fm)
         {
             manager = fm;

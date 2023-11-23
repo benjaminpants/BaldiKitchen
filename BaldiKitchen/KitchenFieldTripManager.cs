@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,8 @@ namespace BaldiKitchen
     {
         Intro = 0,
         MiniIntro = 1,
-        Active = 2
+        Active = 2,
+        Waiting = 3
     }
 
     public enum KitchenRoom
@@ -41,8 +43,21 @@ namespace BaldiKitchen
         private KitchenRoom room;
         private Dictionary<KitchenRoom, KitchenFieldTripRoom> rooms = new Dictionary<KitchenRoom, KitchenFieldTripRoom>();
         private KitchenFieldTripRoom currentRoom => rooms[room];
+        private int lives = 3;
         public float timer = 0f;
+        public SoundObject successSound;
+        public SoundObject failSound;
         public Action timerAction = null;
+        // all the potential microgames
+        public WeightedMicroGame[] potentialMicroGames = new WeightedMicroGame[]
+        {
+            new WeightedMicroGame(new PreheatOvenMicrogame("turkey", 300), 100),
+            new WeightedMicroGame(new PreheatOvenMicrogame("stuffing", 200), 100),
+            new WeightedMicroGame(new PreheatOvenMicrogame("pie", 400), 100)
+        };
+        public List<KitchenTripMicrogame> selectedGames = new List<KitchenTripMicrogame>();
+        public int selectedGameIndex = 0;
+        public KitchenTripMicrogame currentGame => selectedGames[selectedGameIndex];
 
         public void SwitchToRoom(KitchenRoom toSwitch)
         {
@@ -72,15 +87,69 @@ namespace BaldiKitchen
             timerAction = whenDone;
         }
 
+        public void StopTimer()
+        {
+            timer = 0f;
+            timerAction = null;
+            UpdateScore();
+        }
+
+        IEnumerator PostGameDelay()
+        {
+            yield return new WaitForSeconds(2f);
+            selectedGameIndex++;
+            if ((selectedGameIndex >= selectedGames.Count) || (lives == 0))
+            {
+                End(lives);
+                yield break;
+            }
+            BeginCurrentGame();
+            yield break;
+            
+        }
+
+        public override void End(int rank)
+        {
+            base.End(rank);
+            Debug.Log("Ended!");
+        }
+
         public void Update()
         {
             if (timerAction != null)
             {
                 timer -= Time.deltaTime;
+                this.UpdateScore();
                 if (timer <= 0f)
                 {
                     timerAction();
                     timerAction = null;
+                }
+            }
+            if (state == KitchenState.Active)
+            {
+                switch (currentGame.Update())
+                {
+                    case MicroGameState.Progress:
+                        break;
+                    case MicroGameState.Won:
+                        currentRoom.StopPlay();
+                        state = KitchenState.Waiting;
+                        StopTimer();
+                        PlaySound(successSound);
+                        currentGame.End(MicroGameState.Won);
+                        StartCoroutine(PostGameDelay());
+                        break;
+                    case MicroGameState.Lost:
+                        currentRoom.StopPlay();
+                        state = KitchenState.Waiting;
+                        StopTimer();
+                        PlaySound(failSound);
+                        currentGame.End(MicroGameState.Lost);
+                        lives--;
+                        rankDisplay.SetRank(lives);
+                        StartCoroutine(PostGameDelay());
+                        break;
                 }
             }
         }
@@ -109,7 +178,6 @@ namespace BaldiKitchen
         public override void Initialize(BaseGameManager bgm)
         {
             base.Initialize(bgm);
-            SwitchToRoom(KitchenRoom.Oven);
             audIntro = new SoundObject[]
             {
                 BaldiKitchenPlugin.baldiDialogue["kitchen_intro.wav"],
@@ -118,9 +186,27 @@ namespace BaldiKitchen
             };
             UpdateScore();
             scoreText.color = Color.black;
-            this.rankDisplay.SetRank(3);
+            rankDisplay.SetRank(lives);
+            selectedGames.Add(WeightedMicroGame.RandomSelection(potentialMicroGames));
+            selectedGames.Add(WeightedMicroGame.RandomSelection(potentialMicroGames));
+            selectedGames.Add(WeightedMicroGame.RandomSelection(potentialMicroGames));
+            selectedGames.Do(x =>
+            {
+                x.manager = this;
+                x.roomBehavior = this.rooms[x.roomToUse];
+            });
+            SwitchToRoom(currentGame.roomToUse);
             base.StartCoroutine(PlayRandomBaldiAnimationsTilTalkingsDone());
             base.StartCoroutine(base.IntroDelay());
+        }
+
+        public void BeginCurrentGame()
+        {
+            SwitchToRoom(currentGame.roomToUse);
+            state = KitchenState.MiniIntro; // time to perform this rooms mini intro! (todo: this will probably be moved elsewhere)
+            currentGame.PrepareMiniIntro(ref audIntro);
+            base.StartCoroutine(base.IntroDelay());
+            base.StartCoroutine(PlayRandomBaldiAnimationsTilTalkingsDone());
         }
 
         public override void IntroFinished()
@@ -129,22 +215,20 @@ namespace BaldiKitchen
             switch (state)
             {
                 case KitchenState.Intro:
-                    state = KitchenState.MiniIntro; // time to perform this rooms mini intro! (todo: this will probably be moved elsewhere)
-                    currentRoom.PrepareMiniIntro(ref audIntro);
-                    base.StartCoroutine(PlayRandomBaldiAnimationsTilTalkingsDone());
-                    base.StartCoroutine(base.IntroDelay());
+                    BeginCurrentGame();
                     break;
                 case KitchenState.MiniIntro:
                     state = KitchenState.Active;
                     LowerBaldi();
                     currentRoom.BeginPlay();
+                    currentGame.Start();
                     break;
             }
         }
 
         public IEnumerator PlayRandomBaldiAnimationsTilTalkingsDone()
         {
-            while (baldiMan.filesQueued == 0) yield return null;
+            while (baldiMan.filesQueued <= 0) yield return null;
             while (baldiMan.IsPlaying)
             {
                 RandomBaldiAnimation();
@@ -155,7 +239,7 @@ namespace BaldiKitchen
 
         private void UpdateScore()
         {
-            this.scoreText.text = "Score: " + this.score.ToString();
+            this.scoreText.text = String.Format("Score: {0}\nTime: {1}", score.ToString(), timer.ToString("F1"));
         }
     }
 }

@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
+using static BaldiKitchen.KitchenOven;
 using Image = UnityEngine.UI.Image;
 
 namespace BaldiKitchen
@@ -18,6 +19,10 @@ namespace BaldiKitchen
         public override Sprite roomSprite => BaldiKitchenPlugin.OvenBG;
 
         public Knob[] knobs = new Knob[2];
+
+        public Book myBook;
+
+        public StandardMenuButton bookObject;
 
         public int temperature;
 
@@ -57,6 +62,20 @@ namespace BaldiKitchen
             TemperatureText.alignment = TextAlignmentOptions.Midline;
             TemperatureText.rectTransform.offsetMin = new Vector3(-37f, -102f);
             TemperatureText.rectTransform.offsetMax = new Vector3(30f, -2f);
+            myBook = GameObject.Instantiate<Image>(background, transform).gameObject.AddComponent<Book>();
+            myBook.name = "Book";
+            myBook.Initialize(manager);
+            myBook.gameObject.SetActive(false);
+            myBook.transform.SetAsLastSibling();
+            bookObject = BaldiKitchenPlugin.CreateImage(BaldiKitchenPlugin.Book, transform, new Vector3(350f,173f)).gameObject.AddComponent<StandardMenuButton>().InitializeAllEvents();
+            bookObject.name = "Book Object";
+            bookObject.tag = "Untagged";
+            bookObject.OnPress.AddListener(() =>
+            {
+                myBook.SetPage(0);
+                myBook.gameObject.SetActive(true);
+            });
+            myBook.transform.SetAsLastSibling();
             //TemperatureText.transform.localPosition = new Vector3(-37f, -2f);
         }
 
@@ -77,6 +96,7 @@ namespace BaldiKitchen
             {
                 knobs[i].SetButtonActive(true);
             }
+            bookObject.tag = "Button";
         }
 
         public override void StopPlay()
@@ -85,6 +105,7 @@ namespace BaldiKitchen
             {
                 knobs[i].SetButtonActive(false);
             }
+            bookObject.tag = "Untagged";
         }
 
         public override void Reset()
@@ -95,16 +116,121 @@ namespace BaldiKitchen
             {
                 knobs[i].transform.eulerAngles = Vector3.zero;
             }
+            myBook.SetPage(0);
+            myBook.gameObject.SetActive(false);
         }
 
-        public override void PrepareMiniIntro(ref SoundObject[] objs)
+        public class Book : MonoBehaviour
         {
-            objs = new SoundObject[]
+            public Sprite frontPage;
+            public Sprite middlePage;
+            public Sprite backPage;
+            public Image bookImage;
+            public StandardMenuButton leftButton;
+            public StandardMenuButton rightButton;
+            public TMP_Text leftText;
+            public TMP_Text rightText;
+            public int currentPageIndex = 0;
+            public Page currentPage => pages[currentPageIndex];
+            public Page[] pages =
             {
-                BaldiKitchenPlugin.baldiDialogue["oven_preheat_1.wav"],
-                BaldiKitchenPlugin.baldiDialogue["food_turkey.wav"],
-                BaldiKitchenPlugin.baldiDialogue["oven_preheat_2.wav"],
+                //front page
+                new Page
+                {
+                    text="YOU SHOULDNT BE SEEING THIS"
+                },
+                //dummy page
+                new Page
+                {
+                    text="YOU SHOULDNT BE SEEING THIS"
+                },
+                //actual pages go here
+                new Page
+                {
+                    text="YOU SHOULD BE SEEING THIS"
+                },
+                new Page
+                {
+                    text="YOU SHOULD BE SEEING THIS"
+                },
+                //end page
+                new Page
+                {
+                    text="YOU SHOULDNT BE SEEING THIS"
+                }
             };
+
+            public void SetPage(int index)
+            {
+                currentPageIndex = Mathf.Clamp(index,0,pages.Length - 1);
+                if (currentPageIndex == 0)
+                {
+                    leftText.color = Color.clear;
+                    rightText.color = Color.clear;
+                    bookImage.sprite = frontPage;
+                    return;
+                }
+                if (currentPageIndex == pages.Length - 1)
+                {
+                    leftText.color = Color.clear;
+                    rightText.color = Color.clear;
+                    bookImage.sprite = backPage;
+                    return;
+                }
+                leftText.color = Color.black;
+                rightText.color = Color.black;
+                leftText.text = currentPage.text;
+                rightText.text = pages[currentPageIndex + 1].text;
+                bookImage.sprite = middlePage;
+            }
+
+            public void ChangePage(int amount)
+            {
+                SetPage(currentPageIndex + amount);
+            }
+
+
+            public void Initialize(KitchenFieldTripManager manager)
+            {
+                frontPage = BaldiKitchenPlugin.bookSprites[0];
+                middlePage = BaldiKitchenPlugin.bookSprites[1];
+                backPage = BaldiKitchenPlugin.bookSprites[2];
+                bookImage = gameObject.GetComponent<Image>();
+                bookImage.sprite = frontPage;
+                Image left = BaldiKitchenPlugin.CreateImage(BaldiKitchenPlugin.pageHitbox, bookImage.transform, new Vector3(135f,180f));
+                left.tag = "Button";
+                leftButton = left.gameObject.AddComponent<StandardMenuButton>().InitializeAllEvents();
+                Image right = BaldiKitchenPlugin.CreateImage(BaldiKitchenPlugin.pageHitbox, bookImage.transform, new Vector3(350f, 180f));
+                right.tag = "Button";
+                rightButton = right.gameObject.AddComponent<StandardMenuButton>().InitializeAllEvents();
+                rightButton.OnPress.AddListener(() => {
+                    ChangePage(2);
+                });
+                leftButton.OnPress.AddListener(() => {
+                    if (currentPageIndex == 0)
+                    {
+                        gameObject.SetActive(false);
+                        return;
+                    }
+                    ChangePage(-2);
+                });
+                left.color = Color.clear;
+                right.color = Color.clear;
+                leftText = GameObject.Instantiate<TMP_Text>(manager.GetScoreText(), transform);
+                leftText.rectTransform.offsetMin = left.rectTransform.offsetMin;
+                leftText.rectTransform.offsetMax = left.rectTransform.offsetMax;
+                leftText.text = "LOL";
+                rightText = GameObject.Instantiate<TMP_Text>(manager.GetScoreText(), transform);
+                rightText.rectTransform.offsetMin = right.rectTransform.offsetMin;
+                rightText.rectTransform.offsetMax = right.rectTransform.offsetMax;
+                rightText.text = "LOL";
+            }
+
+            public struct Page
+            {
+                public string text;
+                public Sprite image;
+            }
         }
 
         public class Knob : MonoBehaviour

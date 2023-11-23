@@ -31,6 +31,9 @@ namespace BaldiKitchen
 
         public static Sprite OvenBG;
         public static Sprite Knob;
+        public static Sprite pageHitbox;
+        public static Sprite Book;
+        public static Sprite[] bookSprites = new Sprite[3];
 
         public static Image CreateImage(Sprite spr, Transform parent, Vector3 position)
         {
@@ -39,8 +42,8 @@ namespace BaldiKitchen
             img.transform.SetParent(parent);
             img.sprite = spr;
             img.gameObject.transform.localScale = Vector3.one;
-            img.rectTransform.offsetMin = new Vector2(-spr.texture.width / 2f, -spr.texture.width / 2f);
-            img.rectTransform.offsetMax = new Vector2(spr.texture.width / 2f, spr.texture.width / 2f);
+            img.rectTransform.offsetMin = new Vector2(-spr.texture.width / 2f, -spr.texture.height / 2f);
+            img.rectTransform.offsetMax = new Vector2(spr.texture.width / 2f, spr.texture.height / 2f);
             img.rectTransform.anchorMin = new Vector2(0f, 1f);
             img.rectTransform.anchorMax = new Vector2(0f, 1f);
             img.transform.localPosition = new Vector3(-240f, 180f) + (new Vector3(position.x, position.y * -1f));
@@ -52,6 +55,11 @@ namespace BaldiKitchen
             Harmony harmony = new Harmony("mtm101.rulerp.baldiplus.baldikitchen");
             OvenBG = AssetManager.SpriteFromTexture2D(AssetManager.TextureFromMod(this, "Backgrounds", "OvenBG.png"));
             Knob = AssetManager.SpriteFromTexture2D(AssetManager.TextureFromMod(this, "Interactables", "Knob.png"));
+            Book = AssetManager.SpriteFromTexture2D(AssetManager.TextureFromMod(this, "Interactables", "Book.png"));
+            pageHitbox = AssetManager.SpriteFromTexture2D(AssetManager.TextureFromMod(this, "Interactables", "Page.png"));
+            bookSprites[0] = AssetManager.SpriteFromTexture2D(AssetManager.TextureFromMod(this, "Backgrounds", "CookBookClosed.png"));
+            bookSprites[1] = AssetManager.SpriteFromTexture2D(AssetManager.TextureFromMod(this, "Backgrounds", "CookBookOpen.png"));
+            bookSprites[2] = AssetManager.SpriteFromTexture2D(AssetManager.TextureFromMod(this, "Backgrounds", "CookBookClosedBack.png"));
             CreateNewBaldiVL("kitchen_intro.wav","Baldi_Vfx_Kitchen_Intro");
             CreateNewBaldiVL("kitchen_end.wav", "Baldi_Vfx_Kitchen_End");
             CreateNewBaldiVL("kitchen_today.wav", "Baldi_Vfx_Kitchen_Today");
@@ -98,11 +106,12 @@ namespace BaldiKitchen
             AccessTools.Field(me.GetType(),name).SetValue(me, setTo);
         }
 
-        public static void InitializeAllEvents(this StandardMenuButton smb)
+        public static StandardMenuButton InitializeAllEvents(this StandardMenuButton smb)
         {
             smb.OnPress = new UnityEngine.Events.UnityEvent();
             smb.OnHighlight = new UnityEngine.Events.UnityEvent();
             smb.OnRelease = new UnityEngine.Events.UnityEvent();
+            return smb;
         }
     }
 
@@ -142,6 +151,8 @@ namespace BaldiKitchen
             am.audioDevice.outputAudioMixerGroup = Resources.FindObjectsOfTypeAll<UnityEngine.Audio.AudioMixerGroup>().First(x => x.name == "Effects");
             am.audioDevice.ignoreListenerPause = true;
             km.myMan = am;
+            km.successSound = BaldiKitchenPlugin.SoundObjects.Find(x => x.name == "BellGeneric");
+            km.failSound = BaldiKitchenPlugin.SoundObjects.Find(x => x.name == "BAL_Ohh");
             GameObject.Destroy(BaldiKitchenPlugin.kitchenManager.Background.gameObject);
         }
     }
