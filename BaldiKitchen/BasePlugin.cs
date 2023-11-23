@@ -81,16 +81,16 @@ namespace BaldiKitchen
         {
             T manager = GameObject.Instantiate(EmptyTrip).AddComponent<T>();
             // initialize all the variables the manager needs to work properly
-            manager.SetVariable("endlessResultsPre", manager.gameObject.GetComponentInChildren<EndlessTripResults>());
-            manager.SetVariable("tripObject", tripObject);
+            manager.ReflectionSetVariable("endlessResultsPre", manager.gameObject.GetComponentInChildren<EndlessTripResults>());
+            manager.ReflectionSetVariable("tripObject", tripObject);
             FTbaldiAnimator.SetValue(manager, manager.gameObject.GetComponentInChildren<Animator>()); //there should only be one left after the cleaning
-            manager.SetVariable("scoreText", manager.gameObject.transform.Find("Score").gameObject.GetComponent<TMP_Text>());
-            manager.SetVariable("rankDisplay", manager.gameObject.GetComponentInChildren<TripRankDisplay>());
-            manager.SetVariable("baldi", manager.gameObject.transform.Find("Baldi").GetComponent<RectTransform>());
+            manager.ReflectionSetVariable("scoreText", manager.gameObject.transform.Find("Score").gameObject.GetComponent<TMP_Text>());
+            manager.ReflectionSetVariable("rankDisplay", manager.gameObject.GetComponentInChildren<TripRankDisplay>());
+            manager.ReflectionSetVariable("baldi", manager.gameObject.transform.Find("Baldi").GetComponent<RectTransform>());
             FTbaldiMan.SetValue(manager, manager.gameObject.GetComponentInChildren<AudioManagerAnimator>());
             AMAanimator.SetValue(FTbaldiMan.GetValue(manager), FTbaldiAnimator.GetValue(manager)); //update the animator property of the baldi
             FTaudCorrect.SetValue(manager, ((SoundObject[])FTaudCorrect.GetValue(CampingTrip)).Clone());
-            manager.SetVariable("baldiStartHeight", 0f);
+            manager.ReflectionSetVariable("baldiStartHeight", 0f);
             //finalize
             DontDestroyOnLoad(manager.gameObject);
             manager.gameObject.name = String.Format("{0}FieldTrip", EnumExtensions.GetExtendedName<FieldTrips>((int)tripObject.trip));
@@ -101,10 +101,6 @@ namespace BaldiKitchen
 
     public static class Extensions
     {
-        public static void SetVariable(this object me, string name, object setTo)
-        {
-            AccessTools.Field(me.GetType(),name).SetValue(me, setTo);
-        }
 
         public static StandardMenuButton InitializeAllEvents(this StandardMenuButton smb)
         {
