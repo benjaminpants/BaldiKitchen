@@ -132,7 +132,7 @@ namespace BaldiKitchen
             public TMP_Text rightText;
             public int currentPageIndex = 0;
             public Page currentPage => pages[currentPageIndex];
-            public Page[] pages =
+            public List<Page> pages = new List<Page>
             {
                 //front page
                 new Page
@@ -162,7 +162,7 @@ namespace BaldiKitchen
 
             public void SetPage(int index)
             {
-                currentPageIndex = Mathf.Clamp(index,0,pages.Length - 1);
+                currentPageIndex = Mathf.Clamp(index,0,pages.Count - 1);
                 if (currentPageIndex == 0)
                 {
                     leftText.color = Color.clear;
@@ -170,7 +170,7 @@ namespace BaldiKitchen
                     bookImage.sprite = frontPage;
                     return;
                 }
-                if (currentPageIndex == pages.Length - 1)
+                if (currentPageIndex == pages.Count - 1)
                 {
                     leftText.color = Color.clear;
                     rightText.color = Color.clear;
@@ -217,13 +217,21 @@ namespace BaldiKitchen
                 left.color = Color.clear;
                 right.color = Color.clear;
                 leftText = GameObject.Instantiate<TMP_Text>(manager.GetScoreText(), transform);
+                leftText.alignment = TextAlignmentOptions.TopLeft;
+                leftText.rectTransform.anchorMin = Vector2.up;
+                leftText.rectTransform.anchorMax = Vector2.up;
                 leftText.rectTransform.offsetMin = left.rectTransform.offsetMin;
                 leftText.rectTransform.offsetMax = left.rectTransform.offsetMax;
                 leftText.text = "LOL";
                 rightText = GameObject.Instantiate<TMP_Text>(manager.GetScoreText(), transform);
+                rightText.alignment = TextAlignmentOptions.TopLeft;
+                rightText.rectTransform.anchorMin = Vector2.up;
+                rightText.rectTransform.anchorMax = Vector2.up;
                 rightText.rectTransform.offsetMin = right.rectTransform.offsetMin;
                 rightText.rectTransform.offsetMax = right.rectTransform.offsetMax;
                 rightText.text = "LOL";
+                left.transform.SetAsLastSibling();
+                right.transform.SetAsLastSibling();
             }
 
             public struct Page

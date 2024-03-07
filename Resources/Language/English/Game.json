@@ -1,0 +1,13 @@
+{"items":[
+
+{"key":"KitchenTrip_Book_turkey_1","value":"\n\nTurkey is a very good food! It very good for your tum tum! It needs to be prepared at {0}°! Be sure to add lots of seasoning..."},
+{"key":"KitchenTrip_Book_turkey_2","value":"\n\nTurkey is ideally cooked in an oven preheated to {0}°... Don't get cocky now! Not a digit above or lower!"},
+{"key":"KitchenTrip_Book_turkey_3","value":"\n\nTurkey.\nTurkey.\nTurkey.\n{0}°\nTurkey."},
+{"key":"KitchenTrip_Book_stuffing_1","value":"\n\nStuffing sure is stuffing! Stuffed! I'm stuffed... I'm happy I preheat the oven to {0}°!"},
+{"key":"KitchenTrip_Book_stuffing_2","value":"\n\nStuffing........................................... {0}°"},
+{"key":"KitchenTrip_Book_stuffing_3","value":"\n\nThis lovely recipe for stuffing is surely going to get you scrumptious! Start cooking at {0}°"},
+{"key":"KitchenTrip_Book_pie_1","value":"\n\nPie is out of pie ingredients, such as:\nCrust\nPumpkin\n{0}° degrees\nNot lemons."},
+{"key":"KitchenTrip_Book_pie_2","value":"\n\nPie. What is pie? Is it tasty? Is it preheated to {0}° degrees?"},
+{"key":"KitchenTrip_Book_pie_3","value":"\n\nI love crust! I love pumpkin! I love pie! I love ovens at {0}° degrees!"},
+
+]}

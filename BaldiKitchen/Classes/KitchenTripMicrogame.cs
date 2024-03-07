@@ -74,6 +74,8 @@ namespace BaldiKitchen
             doomed = false;
             timeAtRightTemp = 0f;
             manager.SetTimer(10f,TimeRanOut);
+            KitchenOven rm = ((KitchenOven)roomBehavior);
+            //rm.myBook
         }
 
         public void TimeRanOut()
